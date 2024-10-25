@@ -8,13 +8,18 @@ def handle_client(connfd,filepath):
 	connfd.send(b"ok")
 	if command == "send":
 		print("Going to recieve file from client")
-		reciever(connfd,"Client_data.txt")
+		reciever(connfd,"Client_data")
 	elif command == "recieve":
 		sender(connfd,filepath)
 	else:
 		print("Unknown command")
 	connfd.close()
 def sender(connfd,filepath):
+   # ext = filepath[filepath.find('.'):]
+    #print(ext)
+    filename = filepath.removeprefix("/home/s2022103046/")
+    connfd.send(filename.encode())
+    ack = connfd.recv(1024).decode('utf-8')
     with open (filepath,"rb") as fileptr:
         file_data = fileptr.read(1024)
 
@@ -23,12 +28,17 @@ def sender(connfd,filepath):
             file_data = fileptr.read(1024)
     print(f"File sent : {filepath}")
 def reciever(connfd,savepath):
-	with open(savepath,"wb") as fileptr:
+	connfd.send(b"ok")
+	#ext = connfd.recv(1024).decode('utf-8')
+	filename = connfd.recv(1024).decode('utf-8')
+
+	#filename = savepath+ext
+	with open(filename,"wb") as fileptr:
 		file_data = connfd.recv(1024)
 		while file_data:
 			fileptr.write(file_data)
 			file_data = connfd.recv(1024)
-	print(f"File recieved and saved to {savepath}")
+	print(f"File recieved and saved to {filename}")
 
 def start_server(host,port,filepath):
     sockfd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -46,5 +56,5 @@ def start_server(host,port,filepath):
 if __name__ == "__main__":
     filepath = input("Enter the file to send : ")
     host = "10.5.12.254"
-    port = 53036
+    port = 53046
     start_server(host,port,filepath)
